@@ -4,5 +4,6 @@ pymongo
 python-dotenv
 pyjwt
 python-telegram-bot
+python-telegram-bot[webhooks]
 
 
