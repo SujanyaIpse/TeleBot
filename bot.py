@@ -1,7 +1,7 @@
 import os
-import logging
 import jwt
 import time
+import logging
 import pymongo
 from dotenv import load_dotenv
 from telegram import Update
@@ -11,7 +11,6 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI")
-WEBHOOK_URL = "https://web-production-58a4.up.railway.app/webhook/"  # Use your production URL
 
 # MongoDB setup
 client = pymongo.MongoClient(MONGO_URI)
@@ -23,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Secret key for JWT tokens
-SECRET_KEY = "your_super_secret_key"
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command"""
@@ -41,7 +40,7 @@ async def get_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Generate JWT token
     token = jwt.encode({"chat_id": chat_id, "group_link": private_group_link, "exp": timestamp}, SECRET_KEY, algorithm="HS256")
-    secure_link = f"https://your-deployed-app-url.com/redirect?token={token}"
+    secure_link = f"https://web-production-58a4.up.railway.app/redirect?token={token}"
 
     # Store in DB
     collection.insert_one({"chat_id": chat_id, "link": secure_link, "expiry": timestamp, "group_link": private_group_link})
@@ -49,17 +48,17 @@ async def get_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Your secure link: {secure_link} (Expires in 10 mins)")
 
 def main():
-    """Start the bot using webhook"""
+    """Start the bot"""
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("getlink", get_link))
 
-    # Set the webhook URL
-    webhook_url = f"{WEBHOOK_URL}{BOT_TOKEN}"
+    logger.info("Bot is running with webhook.")
+    # Set the webhook with HTTPS URL
+    webhook_url = f"https://web-production-58a4.up.railway.app/webhook/{BOT_TOKEN}"
     app.bot.set_webhook(webhook_url)
 
-    logger.info("Bot is running with webhook.")
-    app.run_webhook(listen="0.0.0.0", port=8443, url_path=BOT_TOKEN)
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
