@@ -92,7 +92,7 @@ mdurl==0.1.2
 mistune==3.0.2
 ml-dtypes==0.4.1
 mpmath==1.3.0
-mysqlclient==2.2.4
+PyMySQL
 namex==0.0.8
 narwhals==1.13.1
 nbclient==0.10.0
