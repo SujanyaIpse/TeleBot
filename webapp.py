@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 import jwt
 import os
 from fastapi.responses import RedirectResponse
@@ -37,11 +37,3 @@ def redirect_user(token: str):
         return {"error": "Token has expired"}
     except jwt.InvalidTokenError:
         return {"error": "Invalid token"}
-
-# Endpoint for webhook, which Telegram will hit
-@app.post("/webhook/{bot_token}")
-async def webhook(request: Request, bot_token: str):
-    # Here you can handle webhook events from Telegram, e.g., messages from users
-    data = await request.json()
-    # Log or handle the data from the request as needed
-    return {"message": "Webhook received", "data": data}
