@@ -47,17 +47,24 @@ async def get_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(f"Your secure link: {secure_link} (Expires in 10 mins)")
 
+async def set_webhook():
+    """Set webhook properly with HTTPS"""
+    webhook_url = f"https://web-production-58a4.up.railway.app/webhook/{BOT_TOKEN}"
+
+    # Ensure `set_webhook` is awaited
+    await app.bot.set_webhook(webhook_url)
+
 def main():
     """Start the bot"""
+    global app
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("getlink", get_link))
 
     logger.info("Bot is running with webhook.")
     
-    # Set the webhook with HTTPS URL
-    webhook_url = f"https://web-production-58a4.up.railway.app/webhook/{BOT_TOKEN}"
-    app.bot.set_webhook(webhook_url)
+    # Ensure webhook is set
+    app.run_until_complete(set_webhook())  # Ensure the webhook is set properly
 
     # Run the application (no polling)
     app.run_webhook(listen="0.0.0.0", port=int(os.getenv("PORT", 5000)), url_path=BOT_TOKEN)
