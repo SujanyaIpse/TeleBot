@@ -1,73 +1,45 @@
-import os
-import jwt
-import time
 import logging
-from dotenv import load_dotenv
+from fastapi import FastAPI
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackContext
+from telegram import Bot
 
-# Load environment variables
-load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-MONGO_URI = os.getenv("MONGO_URI")
+# Initialize the FastAPI app
+app = FastAPI()
 
-# MongoDB setup
-import pymongo
-client = pymongo.MongoClient(MONGO_URI)
-db = client["secure_links_db"]
-collection = db["links"]
-
-# Logger setup
-logging.basicConfig(level=logging.INFO)
+# Set up logging
+logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Secret key for JWT tokens
-SECRET_KEY = os.getenv("SECRET_KEY")
+# Define your Telegram bot token and set the webhook URL
+BOT_TOKEN = "your-telegram-bot-token"
+WEBHOOK_URL = "https://web-production-58a4.up.railway.app/webhook/" + BOT_TOKEN
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Start command"""
-    await update.message.reply_text("Send /getlink <your-private-group-link> to generate a secure link.")
+# Create the bot and application instance
+application = Application.builder().token(BOT_TOKEN).build()
 
-async def get_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Generate a secure link dynamically for any provided private group link"""
-    if not context.args:
-        await update.message.reply_text("Usage: /getlink <private_group_link>")
-        return
+# Define a simple start command
+async def start(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text('Hello! This is your bot.')
 
-    private_group_link = context.args[0]
-    chat_id = update.message.chat_id
-    timestamp = int(time.time()) + 600  # Link expires in 10 minutes
+# Add a handler for the start command
+application.add_handler(CommandHandler("start", start))
 
-    # Generate JWT token
-    token = jwt.encode({"chat_id": chat_id, "group_link": private_group_link, "exp": timestamp}, SECRET_KEY, algorithm="HS256")
-    secure_link = f"https://web-production-58a4.up.railway.app/redirect?token={token}"
-
-    # Store in DB
-    collection.insert_one({"chat_id": chat_id, "link": secure_link, "expiry": timestamp, "group_link": private_group_link})
-
-    await update.message.reply_text(f"Your secure link: {secure_link} (Expires in 10 mins)")
-
+# Set webhook
 async def set_webhook():
-    """Set webhook properly with HTTPS"""
-    webhook_url = f"https://web-production-58a4.up.railway.app/webhook/{BOT_TOKEN}"
+    # Set the webhook for your bot
+    await application.bot.set_webhook(WEBHOOK_URL)
 
-    # Ensure `set_webhook` is awaited
-    await app.bot.set_webhook(webhook_url)
+# Define FastAPI endpoint for the webhook
+@app.post("/webhook/{bot_token}")
+async def webhook(update: Update):
+    await application.process_update(update)
+    return "OK"
 
-def main():
-    """Start the bot"""
-    global app
-    app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("getlink", get_link))
-
-    logger.info("Bot is running with webhook.")
-    
-    # Ensure webhook is set
-    app.run_until_complete(set_webhook())  # Ensure the webhook is set properly
-
-    # Run the application (no polling)
-    app.run_webhook(listen="0.0.0.0", port=int(os.getenv("PORT", 5000)), url_path=BOT_TOKEN)
-
+# Start the webhook setup when FastAPI runs
 if __name__ == "__main__":
-    main()
+    import asyncio
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(set_webhook())
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
