@@ -12,6 +12,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI")
+SECRET_KEY = os.getenv("SECRET_KEY") 
 
 # MongoDB setup
 client = pymongo.MongoClient(MONGO_URI)
