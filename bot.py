@@ -41,7 +41,7 @@ async def get_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Generate JWT token
     token = jwt.encode({"chat_id": chat_id, "group_link": private_group_link, "exp": timestamp}, SECRET_KEY, algorithm="HS256")
-    secure_link = f"https://your-deployed-app-url.com/redirect?token={token}"
+    secure_link = f"https://web-production-58a4.up.railway.app/redirect?token={token}"
 
     # Store in DB
     collection.insert_one({"chat_id": chat_id, "link": secure_link, "expiry": timestamp, "group_link": private_group_link})
