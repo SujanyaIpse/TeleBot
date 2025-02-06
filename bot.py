@@ -7,6 +7,7 @@ import certifi
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Updater
 
 # Load environment variables
 load_dotenv()
@@ -41,7 +42,7 @@ async def get_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Generate JWT token
     token = jwt.encode({"chat_id": chat_id, "group_link": private_group_link, "exp": timestamp}, SECRET_KEY, algorithm="HS256")
-    secure_link = f"https://web-production-58a4.up.railway.app/redirect?token={token}"
+    secure_link = f"https://your-deployed-app-url.com/redirect?token={token}"
 
     # Store in DB
     collection.insert_one({"chat_id": chat_id, "link": secure_link, "expiry": timestamp, "group_link": private_group_link})
@@ -50,14 +51,23 @@ async def get_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     """Start the bot"""
-    app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("getlink", get_link))
+    # Port from environment variables (use default if not found)
+    port = int(os.getenv("PORT", 8080))  # Railway assigns a dynamic port
+    
+    # Setup application
+    application = Application.builder().token(BOT_TOKEN).build()
 
-    logger.info("Bot is running...")
-    app.run_polling()
+    # Command handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("getlink", get_link))
+
+    # Set webhook (instead of long polling)
+    webhook_url = f"https://your-deployed-app-url.com/{BOT_TOKEN}"  # Replace with your actual deployed app URL
+    application.bot.set_webhook(webhook_url)
+
+    # Logging
+    logger.info("Bot is running with webhook.")
+    application.run_webhook(listen="0.0.0.0", port=port, url_path=BOT_TOKEN)
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
-
+    main()
