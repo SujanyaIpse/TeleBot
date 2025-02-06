@@ -12,18 +12,17 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI")
+SECRET_KEY = os.getenv("SECRET_KEY")
+RAILWAY_URL = "https://web-production-58a4.up.railway.app"  # Update with Railway URL
 
 # MongoDB setup
-client = pymongo.MongoClient(MONGO_URI)
+client = pymongo.MongoClient(MONGO_URI, tlsCAFile=certifi.where())
 db = client["secure_links_db"]
 collection = db["links"]
 
 # Logger setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Secret key for JWT tokens
-SECRET_KEY = "your_super_secret_key"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command"""
@@ -41,7 +40,7 @@ async def get_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Generate JWT token
     token = jwt.encode({"chat_id": chat_id, "group_link": private_group_link, "exp": timestamp}, SECRET_KEY, algorithm="HS256")
-    secure_link = f"https://your-deployed-app-url.com/redirect?token={token}"
+    secure_link = f"{RAILWAY_URL}/redirect?token={token}"
 
     # Store in DB
     collection.insert_one({"chat_id": chat_id, "link": secure_link, "expiry": timestamp, "group_link": private_group_link})
