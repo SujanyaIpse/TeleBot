@@ -2,7 +2,6 @@ import os
 import jwt
 import time
 import logging
-import pymongo
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -13,6 +12,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI")
 
 # MongoDB setup
+import pymongo
 client = pymongo.MongoClient(MONGO_URI)
 db = client["secure_links_db"]
 collection = db["links"]
@@ -54,11 +54,13 @@ def main():
     app.add_handler(CommandHandler("getlink", get_link))
 
     logger.info("Bot is running with webhook.")
+    
     # Set the webhook with HTTPS URL
     webhook_url = f"https://web-production-58a4.up.railway.app/webhook/{BOT_TOKEN}"
     app.bot.set_webhook(webhook_url)
 
-    app.run_polling()
+    # Run the application (no polling)
+    app.run_webhook(listen="0.0.0.0", port=int(os.getenv("PORT", 5000)), url_path=BOT_TOKEN)
 
 if __name__ == "__main__":
     main()
