@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackContext
 from telegram import Bot
+from fastapi.responses import JSONResponse
 
 # Initialize the FastAPI app
 app = FastAPI()
@@ -31,10 +32,11 @@ async def set_webhook():
     await application.bot.set_webhook(WEBHOOK_URL)
 
 # Define FastAPI endpoint for the webhook
-@app.post("/webhook/{bot_token}")
+@app.post("/webhook/{bot_token}", response_model=None)
 async def webhook(update: Update):
+    # Process the incoming update
     await application.process_update(update)
-    return "OK"
+    return JSONResponse(content={"status": "OK"}, status_code=200)
 
 # Start the webhook setup when FastAPI runs
 if __name__ == "__main__":
