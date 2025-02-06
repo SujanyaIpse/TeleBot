@@ -32,7 +32,7 @@ async def set_webhook():
     await application.bot.set_webhook(WEBHOOK_URL)
 
 # Define FastAPI endpoint for the webhook
-@app.post("/webhook/{bot_token}", response_model=None)
+@app.post("/webhook/{bot_token}")
 async def webhook(update: Update):
     # Process the incoming update
     await application.process_update(update)
