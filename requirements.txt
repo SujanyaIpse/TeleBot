@@ -4,3 +4,7 @@ pymongo
 python-dotenv
 pyjwt
 python-telegram-bot
+certifi
+telegram
+telegram-ext
+
